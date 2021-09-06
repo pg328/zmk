@@ -18,7 +18,7 @@ struct mouse_config {
     // acceleration exponent 0: uniform speed
     // acceleration exponent 1: uniform acceleration
     // acceleration exponent 2: uniform jerk
-    int acceleration_exponent;
+    float acceleration_exponent;
 };
 
 struct vector2d {
