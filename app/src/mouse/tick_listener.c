@@ -65,6 +65,12 @@ static void track_remainder(float *move, float *remainder) {
 static struct vector2d update_movement(struct movement_state *state,
                                        const struct mouse_config *config, struct vector2d max_speed,
                                        int64_t now) {
+    LOG_DBG("Mouse config: TTMS: %d, delay: %d, AE: %d", config->time_to_max_speed_ms,
+            config->delay_ms, config->acceleration_exponent);
+    if (config->acceleration_exponent == 0) {
+        *state = (struct movement_state){0};
+        return max_speed;
+    }
     struct vector2d move = {0};
     if (max_speed.x == 0 && max_speed.y == 0) {
         *state = (struct movement_state){0};

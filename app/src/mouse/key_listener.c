@@ -20,16 +20,14 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 static struct vector2d move_speed = {0};
 static struct vector2d scroll_speed = {0};
-static struct mouse_config move_config = (struct mouse_config){
-    .delay_ms = 0,
-    .time_to_max_speed_ms = 300,
-    .acceleration_exponent = 2.0,
-};
-static struct mouse_config scroll_config = (struct mouse_config){
-    .delay_ms = 0,
-    .time_to_max_speed_ms = 300,
-    .acceleration_exponent = 2.0,
-};
+static struct mouse_config move_config = (struct mouse_config){0};
+static struct mouse_config scroll_config = (struct mouse_config){0};
+
+bool equals(const struct mouse_config *one, const struct mouse_config *other) {
+    return one->delay_ms == other->delay_ms &&
+           one->time_to_max_speed_ms == other->time_to_max_speed_ms &&
+           one->acceleration_exponent == other->acceleration_exponent;
+}
 
 static void clear_mouse_state(struct k_work *work) {
     move_speed = (struct vector2d){0};
@@ -117,6 +115,14 @@ static void listener_mouse_button_released(const struct zmk_mouse_button_state_c
 int mouse_listener(const zmk_event_t *eh) {
     const struct zmk_mouse_move_state_changed *mmv_ev = as_zmk_mouse_move_state_changed(eh);
     if (mmv_ev) {
+        LOG_DBG("Move config: TTMS: %d, delay: %d, AE: %d", move_config.time_to_max_speed_ms,
+                move_config.delay_ms, move_config.acceleration_exponent);
+
+        if (!equals(&move_config, &(mmv_ev->config)))
+            move_config = mmv_ev->config;
+
+        LOG_DBG("MMV_EV config: TTMS: %d, delay: %d, AE: %d", mmv_ev->config.time_to_max_speed_ms,
+                mmv_ev->config.delay_ms, mmv_ev->config.acceleration_exponent);
         if (mmv_ev->state) {
             listener_mouse_move_pressed(mmv_ev);
         } else {
@@ -126,6 +132,8 @@ int mouse_listener(const zmk_event_t *eh) {
     }
     const struct zmk_mouse_scroll_state_changed *msc_ev = as_zmk_mouse_scroll_state_changed(eh);
     if (msc_ev) {
+        if (!equals(&scroll_config, &(msc_ev->config)))
+            scroll_config = msc_ev->config;
         if (msc_ev->state) {
             listener_mouse_scroll_pressed(msc_ev);
         } else {
