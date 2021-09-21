@@ -115,14 +115,9 @@ static void listener_mouse_button_released(const struct zmk_mouse_button_state_c
 int mouse_listener(const zmk_event_t *eh) {
     const struct zmk_mouse_move_state_changed *mmv_ev = as_zmk_mouse_move_state_changed(eh);
     if (mmv_ev) {
-        LOG_DBG("Move config: TTMS: %d, delay: %d, AE: %d", move_config.time_to_max_speed_ms,
-                move_config.delay_ms, move_config.acceleration_exponent);
-
         if (!equals(&move_config, &(mmv_ev->config)))
             move_config = mmv_ev->config;
 
-        LOG_DBG("MMV_EV config: TTMS: %d, delay: %d, AE: %d", mmv_ev->config.time_to_max_speed_ms,
-                mmv_ev->config.delay_ms, mmv_ev->config.acceleration_exponent);
         if (mmv_ev->state) {
             listener_mouse_move_pressed(mmv_ev);
         } else {
