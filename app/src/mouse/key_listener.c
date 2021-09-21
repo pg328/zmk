@@ -22,6 +22,7 @@ static struct vector2d move_speed = {0};
 static struct vector2d scroll_speed = {0};
 static struct mouse_config move_config = (struct mouse_config){0};
 static struct mouse_config scroll_config = (struct mouse_config){0};
+static int64_t start_time = 0;
 
 bool equals(const struct mouse_config *one, const struct mouse_config *other) {
     return one->delay_ms == other->delay_ms &&
@@ -32,9 +33,10 @@ bool equals(const struct mouse_config *one, const struct mouse_config *other) {
 static void clear_mouse_state(struct k_work *work) {
     move_speed = (struct vector2d){0};
     scroll_speed = (struct vector2d){0};
+    start_time = 0;
     zmk_hid_mouse_movement_set(0, 0);
     zmk_hid_mouse_scroll_set(0, 0);
-    ZMK_EVENT_RELEASE(zmk_mouse_tick(move_speed, scroll_speed, move_config, scroll_config));
+    LOG_DBG("Clearing state");
 }
 
 K_WORK_DEFINE(mouse_clear, &clear_mouse_state);
@@ -46,7 +48,8 @@ void mouse_clear_cb(struct k_timer *dummy) {
 static void mouse_tick_timer_handler(struct k_work *work) {
     zmk_hid_mouse_movement_set(0, 0);
     zmk_hid_mouse_scroll_set(0, 0);
-    ZMK_EVENT_RAISE(zmk_mouse_tick(move_speed, scroll_speed, move_config, scroll_config));
+    LOG_DBG("Raising mouse tick event");
+    ZMK_EVENT_RAISE(zmk_mouse_tick(move_speed, scroll_speed, move_config, scroll_config, &start_time));
     zmk_endpoints_send_mouse_report();
 }
 
@@ -62,6 +65,7 @@ static int mouse_timer_ref_count = 0;
 
 void mouse_timer_ref() {
     if (mouse_timer_ref_count == 0) {
+        start_time = k_uptime_get();
         k_timer_start(&mouse_timer, K_NO_WAIT, K_MSEC(CONFIG_ZMK_MOUSE_TICK_DURATION));
     }
     mouse_timer_ref_count += 1;
